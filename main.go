@@ -73,12 +73,6 @@ func main() {
 			done = true
 		}
 	}
-
-	// Concurrent fetching of data from each search place
-	//	http get request using query string
-	//	select relevant section of answer
-	//	turn html into plain text if not already
-	//	return plain text answer
 }
 
 func fetch(d Dir, q string) <-chan string {
@@ -102,6 +96,7 @@ func fetch(d Dir, q string) <-chan string {
 			matched := rex.Find(str)
 
 			if len(matched) > 0 {
+				// TODO: Parse HTML into plain text
 				c <- answer + string(matched)
 			}
 		}
