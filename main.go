@@ -4,7 +4,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -80,24 +80,23 @@ func fetch(d Dir, q string) <-chan string {
 
 	go func() {
 		uri := d.url + q
-		answer := uri + "\n\n"
+		header := uri + "\n\n"
 
 		resp, err := http.Get(uri)
 		if err != nil {
 			log.Print("response error:", err)
 		} else {
 			defer resp.Body.Close()
-			r := bufio.NewReader(resp.Body)
-			str, err := r.ReadBytes('\000')
-			if err != nil && err != io.EOF {
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
 				log.Print("body read error:", err)
 			}
 			rex := regexp.MustCompile(d.regexp)
-			matched := rex.Find(str)
+			matched := rex.Find(body)
 
 			if len(matched) > 0 {
 				// TODO: Parse HTML into plain text
-				c <- answer + string(matched)
+				c <- header + string(matched)
 			}
 		}
 		c <- ""
