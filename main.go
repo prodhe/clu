@@ -60,12 +60,12 @@ func main() {
 	for done := false; !done; {
 		select {
 		case msg := <-c1:
-			if (msg != "") {
+			if msg != "" {
 				fmt.Printf("%s\n", msg)
 				done = true
 			}
 		case msg := <-c2:
-			if (msg != "") {
+			if msg != "" {
 				fmt.Printf("%s\n", msg)
 				done = true
 			}
@@ -101,7 +101,7 @@ func fetch(d Dir, q string) <-chan string {
 			rex := regexp.MustCompile(d.regexp)
 			matched := rex.Find(str)
 
-			if (len(matched) > 0) {
+			if len(matched) > 0 {
 				c <- answer + string(matched)
 			}
 		}
