@@ -22,6 +22,37 @@ func (d Dir) String() string {
 	return fmt.Sprintf("%s (%s): %s", d.name, d.url, d.regexp)
 }
 
+func (d *Dir) fetch(q string) <-chan string {
+	c := make(chan string)
+
+	go func() {
+		uri := d.url + q
+		header := uri + "\n\n"
+
+		resp, err := http.Get(uri)
+		if err != nil {
+			log.Print("response error:", err)
+		} else {
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Print("body read error:", err)
+			}
+			rex := regexp.MustCompile(d.regexp)
+			matched := rex.Find(body)
+
+			if len(matched) > 0 {
+				// TODO: Parse HTML into plain text
+				c <- header + string(matched)
+			}
+		}
+		c <- ""
+	}()
+
+	return c
+}
+
+
 func main() {
 	// TODO: Parse flags
 
@@ -54,8 +85,8 @@ func main() {
 
 	// Go fetch
 
-	c1 := fetch(dir[0], q)
-	c2 := fetch(dir[1], q)
+	c1 := dir[0].fetch(q)
+	c2 := dir[1].fetch(q)
 
 	for done := false; !done; {
 		select {
@@ -75,32 +106,3 @@ func main() {
 	}
 }
 
-func fetch(d Dir, q string) <-chan string {
-	c := make(chan string)
-
-	go func() {
-		uri := d.url + q
-		header := uri + "\n\n"
-
-		resp, err := http.Get(uri)
-		if err != nil {
-			log.Print("response error:", err)
-		} else {
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Print("body read error:", err)
-			}
-			rex := regexp.MustCompile(d.regexp)
-			matched := rex.Find(body)
-
-			if len(matched) > 0 {
-				// TODO: Parse HTML into plain text
-				c <- header + string(matched)
-			}
-		}
-		c <- ""
-	}()
-
-	return c
-}
