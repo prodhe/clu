@@ -8,7 +8,9 @@ It fetches results from the HTML and CSS documentation and selects the one which
 
 ## Installation
 
-`$ go get github.com/prodhe/clu`
+```
+$ go get github.com/prodhe/clu
+```
 
 ## Credits
 
