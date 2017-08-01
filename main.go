@@ -10,6 +10,8 @@ import (
 	"os"
 	"regexp"
 	"time"
+
+	"github.com/jaytaylor/html2text"
 )
 
 type Dir struct {
@@ -32,26 +34,30 @@ func (d *Dir) fetch(q string) <-chan string {
 		resp, err := http.Get(uri)
 		if err != nil {
 			log.Print("response error:", err)
-		} else {
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Print("body read error:", err)
-			}
-			rex := regexp.MustCompile(d.regexp)
-			matched := rex.Find(body)
-
-			if len(matched) > 0 {
-				// TODO: Parse HTML into plain text
-				c <- header + string(matched)
-			}
 		}
-		c <- ""
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Print("body read error:", err)
+			c <- ""
+		}
+
+		rex := regexp.MustCompile(d.regexp)
+		matched := rex.Find(body)
+
+		if len(matched) > 0 {
+			text, err := html2text.FromString(string(matched), html2text.Options{PrettyTables: true})
+			if err != nil {
+				log.Print("html2text error:", err)
+				c <- ""
+			}
+			c <- header + text
+		}
 	}()
 
 	return c
 }
-
 
 func main() {
 	// TODO: Parse flags
@@ -105,4 +111,3 @@ func main() {
 		}
 	}
 }
-
